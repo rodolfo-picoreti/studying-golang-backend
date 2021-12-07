@@ -20,6 +20,7 @@ type productSearchRequest struct {
 type product struct {
 	Code       string `json:"code"`
 	PriceCents int    `json:"priceCents"`
+	Version    int    `json:"version"`
 }
 
 func getProducts(c *gin.Context) {
@@ -53,7 +54,7 @@ func getProducts(c *gin.Context) {
 
 	res := NewPaginatedResponse(req.Page, totalPages, len(products))
 	for i, p := range products {
-		res.Items[i] = product{Code: p.Code, PriceCents: p.Price}
+		res.Items[i] = product{Code: p.Code, PriceCents: p.Price, Version: p.Version}
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -62,10 +63,6 @@ func getProducts(c *gin.Context) {
 type addProductRequest struct {
 	Code       string `json:"code" binding:"required"`
 	PriceCents int    `json:"priceCents" binding:"required,min=1"`
-}
-
-type addProductResponse struct {
-	Code string `json:"code"`
 }
 
 func addProduct(c *gin.Context) {
@@ -84,11 +81,12 @@ func addProduct(c *gin.Context) {
 
 	db.Create(&models.Product{Code: req.Code, Price: req.PriceCents})
 
-	c.JSON(http.StatusOK, addProductResponse{Code: req.Code})
+	c.JSON(http.StatusOK, product{Code: req.Code, Version: 0})
 }
 
 type updateProductRequest struct {
 	PriceCents int `json:"priceCents" binding:"required,min=1"`
+	Version    int `json:"version"`
 }
 
 func updateProduct(c *gin.Context) {
@@ -101,16 +99,25 @@ func updateProduct(c *gin.Context) {
 	db := models.GetDbConnection()
 	code := c.Param("code")
 
-	var product models.Product
-	if r := db.Where("code = ?", code).First(&product); errors.Is(r.Error, gorm.ErrRecordNotFound) {
+	var p models.Product
+	if r := db.Where("code = ?", code).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
 		c.JSON(NewNotFoundError())
 		return
 	}
 
-	product.Price = req.PriceCents
-	db.Save(&product)
+	updates := models.Product{
+		Price: req.PriceCents,
+		BaseModel: models.BaseModel{
+			Version: req.Version + 1,
+		},
+	}
 
-	c.JSON(http.StatusOK, addProductResponse{Code: code})
+	if r := db.Model(&p).Where("version = ?", req.Version).Updates(updates); r.RowsAffected == 0 {
+		c.JSON(NewVersionError())
+		return
+	}
+
+	c.JSON(http.StatusOK, product{Code: p.Code, PriceCents: p.Price, Version: p.Version})
 }
 
 // RegisterProductsRoutes will register all the routes for the products domain

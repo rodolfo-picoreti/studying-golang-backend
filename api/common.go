@@ -45,3 +45,9 @@ func NewBadRequestError(err error) (int, *ErrorResponse) {
 		Message: fmt.Sprintf("Invalid request %s", err),
 	}
 }
+
+func NewVersionError() (int, *ErrorResponse) {
+	return http.StatusConflict, &ErrorResponse{
+		Message: fmt.Sprintf("Resource version do not match"),
+	}
+}
