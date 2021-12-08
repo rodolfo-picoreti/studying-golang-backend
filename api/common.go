@@ -7,7 +7,7 @@ import (
 
 type PaginatedRequest struct {
 	Page      int `form:"page,default=0"`
-	PageLimit int `form:"pageLimit,default=20"`
+	PageLimit int `form:"limit,default=20"`
 }
 
 type PaginatedResponse struct {
