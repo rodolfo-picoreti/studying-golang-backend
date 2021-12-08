@@ -1,16 +1,20 @@
 package services
 
 import (
-	"time"
+	"example/hello/config"
 
 	"github.com/gin-contrib/cache/persistence"
 )
 
-var store *persistence.InMemoryStore
+var store *persistence.RedisStore
 
-func GetCacheStore() *persistence.InMemoryStore {
+func GetCacheStore() *persistence.RedisStore {
 	if store == nil {
-		store = persistence.NewInMemoryStore(time.Second)
+		config := config.ReadConfig()
+
+		store = persistence.NewRedisCache(config.Cache.Hostname,
+			config.Cache.Password,
+			config.Cache.DefaultExpiration)
 	}
 	return store
 }

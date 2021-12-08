@@ -4,6 +4,7 @@ import (
 	"errors"
 	"example/hello/models"
 	"fmt"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -11,6 +12,26 @@ import (
 
 func getProductCacheKey(code string) string {
 	return fmt.Sprintf("product/%s", code)
+}
+
+func getCache(code string, p *models.Product) error {
+	return GetCacheStore().Get(getProductCacheKey(code), p)
+}
+
+func setCache(p *models.Product) error {
+	err := GetCacheStore().Set(getProductCacheKey(p.Code), *p, time.Minute)
+	if err != nil {
+		log.Println("setCache failed", err)
+	}
+	return err
+}
+
+func expireCache(code string) error {
+	err := GetCacheStore().Delete(getProductCacheKey(code))
+	if err != nil {
+		log.Println("expireCache failed", err)
+	}
+	return err
 }
 
 var (
@@ -39,15 +60,16 @@ func FindProducts(offset int, limit int, codePreffix string) (*[]models.Product,
 func FindProductByCode(code string) (models.Product, error) {
 	var p models.Product
 
-	if err := GetCacheStore().Get(getProductCacheKey(code), &p); err != nil {
+	if err := getCache(code, &p); err != nil {
 		db := models.GetDbConnection()
 
 		if r := db.Where("code = ?", code).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
 			return models.Product{}, ProductNotFoundError
 		}
+
+		setCache(&p)
 	}
 
-	GetCacheStore().Set(getProductCacheKey(code), p, time.Minute)
 	return p, nil
 }
 
@@ -65,18 +87,17 @@ func UpdateProductByCode(code string, updates *models.Product, version int) erro
 		return ProductVersionConflictError
 	}
 
-	GetCacheStore().Delete(getProductCacheKey(code))
+	expireCache(code)
 	return nil
 }
 
-func CreateProduct(product *models.Product) error {
+func CreateProduct(p *models.Product) error {
 	db := models.GetDbConnection()
 
-	if r := db.Create(product); r.Error != nil {
+	if r := db.Create(p); r.Error != nil {
 		return ProductCreateError
 	}
 
-	GetCacheStore().Set(getProductCacheKey(product.Code), *product, time.Minute)
-
+	expireCache(p.Code)
 	return nil
 }
