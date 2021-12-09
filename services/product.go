@@ -1,11 +1,11 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"example/hello/models"
+	"example/hello/telemetry"
 	"fmt"
-	"log"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -14,24 +14,16 @@ func getProductCacheKey(code string) string {
 	return fmt.Sprintf("product/%s", code)
 }
 
-func getCache(code string, p *models.Product) error {
-	return GetCacheStore().Get(getProductCacheKey(code), p)
+func getCache(ctx context.Context, code string, p *models.Product) error {
+	return GetCache(ctx, getProductCacheKey(code), p)
 }
 
-func setCache(p *models.Product) error {
-	err := GetCacheStore().Set(getProductCacheKey(p.Code), *p, time.Minute)
-	if err != nil {
-		log.Println("setCache failed", err)
-	}
-	return err
+func setCache(ctx context.Context, p *models.Product) error {
+	return SetCache(ctx, getProductCacheKey(p.Code), *p)
 }
 
-func expireCache(code string) error {
-	err := GetCacheStore().Delete(getProductCacheKey(code))
-	if err != nil {
-		log.Println("expireCache failed", err)
-	}
-	return err
+func expireCache(ctx context.Context, code string) error {
+	return ExpireCache(ctx, getProductCacheKey(code))
 }
 
 var (
@@ -40,7 +32,10 @@ var (
 	ProductCreateError          = errors.New("Product creation failed")
 )
 
-func FindProducts(offset int, limit int, codePreffix string) (*[]models.Product, int64, error) {
+func FindProducts(ctx context.Context, offset int, limit int, codePreffix string) (*[]models.Product, int64, error) {
+	_, span := telemetry.Tracer.Start(ctx, "FindProducts")
+	defer span.End()
+
 	db := models.GetDbConnection()
 
 	tx := db
@@ -57,23 +52,34 @@ func FindProducts(offset int, limit int, codePreffix string) (*[]models.Product,
 	return &products, count, nil
 }
 
-func FindProductByCode(code string) (models.Product, error) {
+func FindProductByCode(ctx context.Context, code string) (models.Product, error) {
+	_, span := telemetry.Tracer.Start(ctx, "FindProductByCode")
+	defer span.End()
+
 	var p models.Product
 
-	if err := getCache(code, &p); err != nil {
+	if err := getCache(ctx, code, &p); err != nil {
 		db := models.GetDbConnection()
 
-		if r := db.Where("code = ?", code).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			return models.Product{}, ProductNotFoundError
+		{
+			_, s := telemetry.Tracer.Start(ctx, "SelectDb")
+			defer s.End()
+
+			if r := db.Where("code = ?", code).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
+				return models.Product{}, ProductNotFoundError
+			}
 		}
 
-		setCache(&p)
+		setCache(ctx, &p)
 	}
 
 	return p, nil
 }
 
-func UpdateProductByCode(code string, updates *models.Product, version int) error {
+func UpdateProductByCode(ctx context.Context, code string, updates *models.Product, version int) error {
+	_, span := telemetry.Tracer.Start(ctx, "UpdateProductByCode")
+	defer span.End()
+
 	db := models.GetDbConnection()
 
 	var p models.Product
@@ -87,17 +93,19 @@ func UpdateProductByCode(code string, updates *models.Product, version int) erro
 		return ProductVersionConflictError
 	}
 
-	expireCache(code)
+	expireCache(ctx, code)
 	return nil
 }
 
-func CreateProduct(p *models.Product) error {
+func CreateProduct(ctx context.Context, p *models.Product) error {
+	_, span := telemetry.Tracer.Start(ctx, "CreateProduct")
+	defer span.End()
+
 	db := models.GetDbConnection()
 
 	if r := db.Create(p); r.Error != nil {
 		return ProductCreateError
 	}
 
-	expireCache(p.Code)
 	return nil
 }

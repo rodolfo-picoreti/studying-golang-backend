@@ -2,7 +2,7 @@ package models
 
 import (
 	"example/hello/config"
-	"log"
+	"example/hello/telemetry"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,21 +13,24 @@ var db *gorm.DB
 
 // GetDbConnection returns current database conneciton or creates on the first call
 func GetDbConnection() *gorm.DB {
-	if db == nil {
-		db = createDbConnection()
-	}
 	return db
 }
 
-func createDbConnection() *gorm.DB {
+func InitDB() {
 	config := config.ReadConfig()
 
-	log.Println("Connecting to dabatase...")
-	db, err := gorm.Open(postgres.Open(config.DB.URI), &gorm.Config{
+	telemetry.GetLogger().Info().Msg("Connecting to dabatase...")
+	dbConn, err := gorm.Open(postgres.Open(config.DB.URI), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix: config.DB.Prefix,
 		},
 	})
+
+	if err != nil {
+		telemetry.GetLogger().Fatal().Msg("Failed to connect to database")
+	}
+
+	db = dbConn
 
 	// db.Use(prometheus.New(prometheus.Config{
 	// 	DBName:          "db",
@@ -35,10 +38,8 @@ func createDbConnection() *gorm.DB {
 	// 	StartServer:     true,
 	// 	HTTPServerPort:  8081,
 	// }))
+}
 
-	if err != nil {
-		panic("Failed to connect to database")
-	}
-
-	return db
+func AutoMigrate() {
+	db.AutoMigrate(&Product{})
 }

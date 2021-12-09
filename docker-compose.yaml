@@ -1,9 +1,52 @@
 ---
 version: '2'
 services:
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+
   redis:
     image: redis:6.2-alpine
     restart: always
     hostname: redis
     ports:
       - "6379:6379"
+
+  otel-collector:
+    hostname: otel-collector
+    image: otel/opentelemetry-collector:0.40.0
+    command: [ "--config=/etc/otel-collector.yaml" ]
+    volumes:
+      - ./.config/otel-collector.yaml:/etc/otel-collector.yaml
+    ports:
+      - "4317:4317"
+
+  tempo:
+    hostname: tempo
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./.config/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "14268"  # jaeger ingest
+      - "3200"   # tempo
+      - "55680"  # otlp grpc
+      - "55681"  # otlp http
+      - "9411"   # zipkin
+
+  grafana:
+    image: grafana/grafana:8.1.6
+    volumes:
+      - ./.config/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"

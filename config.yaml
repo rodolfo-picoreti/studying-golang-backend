@@ -1,9 +1,13 @@
+serviceName: product-service
 
 db:
-  uri: postgresql://rodolfo:3ZubT3tMzT2532g6@free-tier4.aws-us-west-2.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full&sslrootcert=/home/rodolfo/.postgresql/root.crt&options=--cluster%3Dlanky-skunk-1583
+  uri: postgresql://postgres:postgres@localhost:5432/postgres
   prefix: hello.
 
 cache:
   hostname: localhost:6379
   password: ""
   defaultExpiration: 60s
+
+tracing:
+  target: localhost:4317

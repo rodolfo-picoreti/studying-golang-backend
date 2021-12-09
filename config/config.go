@@ -9,8 +9,10 @@ import (
 )
 
 type rootConfig struct {
-	DB    dbConfig    `yaml:"db"`
-	Cache cacheConfig `yaml:"cache"`
+	ServiceName string        `yaml:"serviceName"`
+	DB          dbConfig      `yaml:"db"`
+	Cache       cacheConfig   `yaml:"cache"`
+	Tracing     tracingConfig `yaml:"tracing"`
 }
 
 type dbConfig struct {
@@ -22,6 +24,10 @@ type cacheConfig struct {
 	Hostname          string        `yaml:"hostname"`
 	Password          string        `yaml:"password"`
 	DefaultExpiration time.Duration `yaml:"defaultExpiration"`
+}
+
+type tracingConfig struct {
+	Target string `yaml:"target"`
 }
 
 func getConfigFilePath() string {
