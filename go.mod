@@ -1,11 +1,13 @@
-module example/hello
+module github.com/rodolfo-picoreti/studying-golang-backend
 
 go 1.17
 
 require (
 	github.com/gin-contrib/cache v1.1.0
+	github.com/gin-contrib/logger v0.2.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/google/uuid v1.3.0
+	github.com/rs/zerolog v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.2.3
 	gorm.io/gorm v1.22.4
@@ -13,9 +15,7 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
-	github.com/gin-contrib/logger v0.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/rs/zerolog v1.26.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.10.0 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
@@ -46,16 +46,14 @@ require (
 	github.com/memcachier/mc v2.0.1+incompatible // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/robfig/go-cache v0.0.0-20130306151617-9fc39e0dbf62 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.27.0 // indirect
-	go.opentelemetry.io/otel v1.2.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.2.0
+	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.27.0
+	go.opentelemetry.io/otel v1.2.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.2.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.2.0
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.2.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.2.0 // indirect
-	go.opentelemetry.io/otel/trace v1.2.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.2.0
+	go.opentelemetry.io/otel/trace v1.2.0
 	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
 	golang.org/x/text v0.3.7 // indirect

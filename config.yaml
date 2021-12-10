@@ -1,4 +1,6 @@
-serviceName: product-service
+service:
+  name: product-service
+  version: 0.0.1
 
 db:
   uri: postgresql://postgres:postgres@localhost:5432/postgres

@@ -9,10 +9,15 @@ import (
 )
 
 type rootConfig struct {
-	ServiceName string        `yaml:"serviceName"`
-	DB          dbConfig      `yaml:"db"`
-	Cache       cacheConfig   `yaml:"cache"`
-	Tracing     tracingConfig `yaml:"tracing"`
+	Service serviceConfig `yaml:"service"`
+	DB      dbConfig      `yaml:"db"`
+	Cache   cacheConfig   `yaml:"cache"`
+	Tracing tracingConfig `yaml:"tracing"`
+}
+
+type serviceConfig struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
 }
 
 type dbConfig struct {

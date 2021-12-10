@@ -22,5 +22,5 @@ func main() {
 	r.Use(telemetry.LoggerMiddleware())
 
 	api.RegisterProductsRoutes(r)
-	r.Run()
+	r.Run(":8080")
 }

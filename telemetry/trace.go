@@ -36,8 +36,8 @@ func InitTraceProvider() func() {
 
 	r := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceNameKey.String(config.ServiceName),
-		semconv.ServiceVersionKey.String("0.0.1"),
+		semconv.ServiceNameKey.String(config.Service.Name),
+		semconv.ServiceVersionKey.String(config.Service.Version),
 	)
 
 	// Aggregate spans before export
