@@ -3,27 +3,27 @@ package services
 import (
 	"context"
 	"errors"
-	"example/hello/models"
-	"example/hello/telemetry"
 	"fmt"
 
+	"github.com/rodolfo-picoreti/studying-golang-backend/models"
+	"github.com/rodolfo-picoreti/studying-golang-backend/telemetry"
 	"gorm.io/gorm"
 )
 
-func getProductCacheKey(code string) string {
-	return fmt.Sprintf("product/%s", code)
+func getProductCacheKey(sku string) string {
+	return fmt.Sprintf("product/%s", sku)
 }
 
-func getCache(ctx context.Context, code string, p *models.Product) error {
-	return GetCache(ctx, getProductCacheKey(code), p)
+func getCache(ctx context.Context, sku string, p *models.Product) error {
+	return GetCache(ctx, getProductCacheKey(sku), p)
 }
 
 func setCache(ctx context.Context, p *models.Product) error {
-	return SetCache(ctx, getProductCacheKey(p.Code), *p)
+	return SetCache(ctx, getProductCacheKey(p.Sku), *p)
 }
 
-func expireCache(ctx context.Context, code string) error {
-	return ExpireCache(ctx, getProductCacheKey(code))
+func expireCache(ctx context.Context, sku string) error {
+	return ExpireCache(ctx, getProductCacheKey(sku))
 }
 
 var (
@@ -40,7 +40,7 @@ func FindProducts(ctx context.Context, offset int, limit int, codePreffix string
 
 	tx := db
 	if codePreffix != "" {
-		tx = db.Where("code like ?", fmt.Sprintf("%s%%", codePreffix)).Session(&gorm.Session{})
+		tx = db.Where("sku like ?", fmt.Sprintf("%s%%", codePreffix)).Session(&gorm.Session{})
 	}
 
 	products := make([]models.Product, limit)
@@ -52,20 +52,20 @@ func FindProducts(ctx context.Context, offset int, limit int, codePreffix string
 	return &products, count, nil
 }
 
-func FindProductByCode(ctx context.Context, code string) (models.Product, error) {
-	_, span := telemetry.Tracer.Start(ctx, "FindProductByCode")
+func FindProductBySku(ctx context.Context, sku string) (models.Product, error) {
+	_, span := telemetry.Tracer.Start(ctx, "FindProductBySku")
 	defer span.End()
 
 	var p models.Product
 
-	if err := getCache(ctx, code, &p); err != nil {
+	if err := getCache(ctx, sku, &p); err != nil {
 		db := models.GetDbConnection()
 
 		{
 			_, s := telemetry.Tracer.Start(ctx, "SelectDb")
 			defer s.End()
 
-			if r := db.Where("code = ?", code).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
+			if r := db.Where("sku = ?", sku).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
 				return models.Product{}, ProductNotFoundError
 			}
 		}
@@ -76,14 +76,14 @@ func FindProductByCode(ctx context.Context, code string) (models.Product, error)
 	return p, nil
 }
 
-func UpdateProductByCode(ctx context.Context, code string, updates *models.Product, version int) error {
-	_, span := telemetry.Tracer.Start(ctx, "UpdateProductByCode")
+func UpdateProductBySku(ctx context.Context, sku string, updates *models.Product, version int) error {
+	_, span := telemetry.Tracer.Start(ctx, "UpdateProductBySku")
 	defer span.End()
 
 	db := models.GetDbConnection()
 
 	var p models.Product
-	if r := db.Where("code = ?", code).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
+	if r := db.Where("sku = ?", sku).First(&p); errors.Is(r.Error, gorm.ErrRecordNotFound) {
 		return ProductNotFoundError
 	}
 
@@ -93,7 +93,7 @@ func UpdateProductByCode(ctx context.Context, code string, updates *models.Produ
 		return ProductVersionConflictError
 	}
 
-	expireCache(ctx, code)
+	expireCache(ctx, sku)
 	return nil
 }
 

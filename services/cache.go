@@ -2,11 +2,11 @@ package services
 
 import (
 	"context"
-	"example/hello/config"
-	"example/hello/telemetry"
 	"time"
 
 	"github.com/gin-contrib/cache/persistence"
+	"github.com/rodolfo-picoreti/studying-golang-backend/config"
+	"github.com/rodolfo-picoreti/studying-golang-backend/telemetry"
 	"go.opentelemetry.io/otel/attribute"
 )
 

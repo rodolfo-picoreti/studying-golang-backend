@@ -2,9 +2,9 @@ package telemetry
 
 import (
 	"context"
-	"example/hello/config"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rodolfo-picoreti/studying-golang-backend/config"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"

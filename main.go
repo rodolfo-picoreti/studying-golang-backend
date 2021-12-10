@@ -1,11 +1,10 @@
 package main
 
 import (
-	"example/hello/api"
-	"example/hello/models"
-	"example/hello/telemetry"
-
 	"github.com/gin-gonic/gin"
+	"github.com/rodolfo-picoreti/studying-golang-backend/api"
+	"github.com/rodolfo-picoreti/studying-golang-backend/models"
+	"github.com/rodolfo-picoreti/studying-golang-backend/telemetry"
 )
 
 func main() {

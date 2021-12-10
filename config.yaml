@@ -4,7 +4,7 @@ service:
 
 db:
   uri: postgresql://postgres:postgres@localhost:5432/postgres
-  prefix: hello.
+  prefix: public.
 
 cache:
   hostname: localhost:6379

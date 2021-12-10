@@ -1,8 +1,8 @@
 package models
 
 import (
-	"example/hello/config"
-	"example/hello/telemetry"
+	"github.com/rodolfo-picoreti/studying-golang-backend/config"
+	"github.com/rodolfo-picoreti/studying-golang-backend/telemetry"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -41,5 +41,10 @@ func InitDB() {
 }
 
 func AutoMigrate() {
+	db.AutoMigrate(&Attribute{})
+	db.AutoMigrate(&AttributeDefinition{})
+	db.AutoMigrate(&ProductType{})
 	db.AutoMigrate(&Product{})
+	db.AutoMigrate(&Inventory{})
+	db.AutoMigrate(&Price{})
 }

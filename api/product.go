@@ -1,17 +1,18 @@
 package api
 
 import (
-	"example/hello/models"
-	"example/hello/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rodolfo-picoreti/studying-golang-backend/models"
+	"github.com/rodolfo-picoreti/studying-golang-backend/services"
 )
 
 type product struct {
-	Code       string `json:"code"`
-	PriceCents int    `json:"priceCents"`
-	Version    int    `json:"version"`
+	Sku         string `json:"sku"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Version     int    `json:"version"`
 }
 
 type productSearchRequest struct {
@@ -20,13 +21,22 @@ type productSearchRequest struct {
 }
 
 type updateProductRequest struct {
-	PriceCents int `json:"priceCents" binding:"required,min=1"`
-	Version    int `json:"version"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Version     int    `json:"version"`
 }
 
 type addProductRequest struct {
-	Code       string `json:"code" binding:"required"`
-	PriceCents int    `json:"priceCents" binding:"required,min=1"`
+	Sku         string `json:"sku" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+}
+
+func buildProductDto(p *models.Product) product {
+	return product{
+		Sku:     p.Sku,
+		Version: p.Version,
+	}
 }
 
 func getProducts(c *gin.Context) {
@@ -47,7 +57,7 @@ func getProducts(c *gin.Context) {
 
 	res := NewPaginatedResponse(req.Page, totalPages, len(*products))
 	for i, p := range *products {
-		res.Items[i] = product{Code: p.Code, PriceCents: p.Price, Version: p.Version}
+		res.Items[i] = buildProductDto(&p)
 	}
 
 	c.JSON(http.StatusOK, res)
@@ -55,15 +65,15 @@ func getProducts(c *gin.Context) {
 
 func getProduct(c *gin.Context) {
 	ctx := c.Request.Context()
-	code := c.Param("code")
+	sku := c.Param("sku")
 
-	p, err := services.FindProductByCode(ctx, code)
+	p, err := services.FindProductBySku(ctx, sku)
 	if err != nil {
 		c.JSON(NewNotFoundError())
 		return
 	}
 
-	c.JSON(http.StatusOK, product{Code: p.Code, PriceCents: p.Price})
+	c.JSON(http.StatusOK, buildProductDto(&p))
 }
 
 func createProduct(c *gin.Context) {
@@ -74,13 +84,14 @@ func createProduct(c *gin.Context) {
 		return
 	}
 
-	_, err := services.FindProductByCode(ctx, req.Code)
+	_, err := services.FindProductBySku(ctx, req.Sku)
 	if err == nil {
 		c.JSON(NewAlreadyExistsError())
 		return
 	}
 
-	services.CreateProduct(ctx, &models.Product{Code: req.Code, Price: req.PriceCents})
+	// todo: build model
+	services.CreateProduct(ctx, &models.Product{})
 
 	c.Status(http.StatusOK)
 }
@@ -93,12 +104,11 @@ func updateProduct(c *gin.Context) {
 		return
 	}
 
-	code := c.Param("code")
-	updates := models.Product{
-		Price: req.PriceCents,
-	}
+	sku := c.Param("sku")
+	// todo: build model
+	updates := models.Product{}
 
-	if err := services.UpdateProductByCode(ctx, code, &updates, req.Version); err != nil {
+	if err := services.UpdateProductBySku(ctx, sku, &updates, req.Version); err != nil {
 		switch err {
 		case services.ProductNotFoundError:
 			c.JSON(NewNotFoundError())
@@ -113,7 +123,7 @@ func updateProduct(c *gin.Context) {
 // RegisterProductsRoutes will register all the routes for the products domain
 func RegisterProductsRoutes(r *gin.Engine) {
 	r.GET("/products", getProducts)
-	r.GET("/products/:code", getProduct)
+	r.GET("/products/:sku", getProduct)
 	r.POST("/products", createProduct)
-	r.PUT("/products/:code", updateProduct)
+	r.PUT("/products/:sku", updateProduct)
 }
